@@ -1,0 +1,14 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Sensitive files
+password_history.txt
+exported_passwords.txt
+
+# OS files
+.DS_Store
