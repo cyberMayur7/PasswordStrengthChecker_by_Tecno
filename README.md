@@ -14,7 +14,7 @@ A fun, secure Python tool for generating and checking password strength with a h
 3. Run: `python password_checker.py`
 
 ## Screenshots
-![Hacker GUI](<img width="874" height="659" alt="image" src="https://github.com/user-attachments/assets/68c09528-6341-40e6-9577-db3ab4671b0c" />
+![Hacker GUI](<img width="874" height="659" alt="image" src="https://github.com/user-attachments/assets/3c28626d-65a8-41c0-a651-5e166bcadb18" />
 )  <!-- Upload later -->
 
 ## Requirements
