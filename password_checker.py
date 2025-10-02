@@ -6,6 +6,30 @@ import pyperclip
 import time
 import os
 from datetime import datetime
+import pygame  # For sound effects
+
+# Initialize pygame mixer for sounds
+pygame.mixer.init()
+
+# Simple sound functions (tones without files – pygame generates)
+def play_beep(frequency=800, duration=0.2):
+    try:
+        sample_rate = 22050
+        frames = int(duration * sample_rate)
+        arr = pygame.sndarray.make_sound(pygame.sndarray.array(pygame.mixer.Sound(buffer=b'\x00\x7f' * frames)))  # Simple beep
+        arr = arr * (frequency / 440)  # Adjust pitch
+        sound = pygame.sndarray.make_sound(arr)
+        sound.play()
+    except:
+        pass  # Silent if error
+
+def play_scan_sound():
+    play_beep(600, 0.1)  # Low scan beep
+    time.sleep(0.05)
+    play_beep(800, 0.1)
+
+def play_success_sound():
+    play_beep(1000, 0.3)  # High success
 
 # History file path
 HISTORY_FILE = "password_history.txt"
@@ -113,34 +137,34 @@ def generate_password(length=12, include_upper=True, include_lower=True, include
         return ["No characters selected!"], "No chars? Select options! 😅"
     
     passwords = []
-    casual_tips = [
-        "Yeh password hacker ko bhagayega! 💪",
-        "Casual vibe: Easy to remember, hard to crack! 😎",
-        "Stronger than your coffee! ☕🔒",
-        "Avoid 'password123' – yeh weak hai! 🚫"
+    meme_tips = [  # More fun memes!
+        "This password is stronger than Thanos! 🦸‍♂️ No snap needed.",
+        "Don't be like this: '123456' – RIP your security 😂💀",
+        "Hacker approved: Uncrackable like a vault! 🔐🕵️‍♂️",
+        "Casual mode: Easy peasy, but hackers hate it! 🤪🚫",
+        "Generated like a boss – copy & conquer! 👑📋"
     ]
     
     for i in range(num_passwords):
         password = ''.join(random.choice(chars) for _ in range(length))
         if style == "Casual":
-            # Make it slightly memorable (e.g., mix words but secure)
             words = ["secure", "strong", "safe", "lock", "guard"]
             base = random.choice(words) + str(random.randint(10,99)) + random.choice("!@#")
             password = base + ''.join(random.choice(chars) for _ in range(length - len(base)))
         elif style == "Funny":
-            # Fun but secure (e.g., add punny chars)
             fun_suffix = random.choice(["HahaSecure!", "CrackMeNot😂", "PwndByMe!"])
             password = ''.join(random.choice(chars) for _ in range(length - len(fun_suffix))) + fun_suffix
-            password = password[:length]  # Ensure length
+            password = password[:length]
         
         passwords.append(password)
         save_to_history(password, "Generated", f"generated ({style})")
     
-    tip = random.choice(casual_tips)
+    tip = random.choice(meme_tips)
     return passwords, tip
 
 def copy_to_clipboard(text):
     pyperclip.copy(text)
+    play_success_sound()
     messagebox.showinfo("Copied!", "Password copied to clipboard! 📋")
 
 def export_history():
@@ -153,33 +177,64 @@ def export_history():
     try:
         with open(filename, 'w', encoding='utf-8') as f:
             f.write("\n".join(history))
+        play_success_sound()
         messagebox.showinfo("Exported!", f"History saved to {filename} ✅")
     except Exception as e:
         messagebox.showerror("Error", f"Export failed: {e}")
 
+# Typing animation function (hacker-style)
+def type_text(widget, text, speed=0.05):
+    widget.delete(1.0, tk.END)
+    for char in text:
+        widget.insert(tk.END, char)
+        widget.update()
+        time.sleep(speed)
+    widget.insert(tk.END, "\n")  # New line
+
+# Flashing animation for score
+def flash_score(label, color="green", times=3):
+    original_color = label.cget("foreground")
+    for _ in range(times):
+        label.config(foreground=color)
+        label.update()
+        time.sleep(0.2)
+        label.config(foreground=original_color)
+        label.update()
+        time.sleep(0.2)
+
 # GUI Setup
 def create_gui():
     root = tk.Tk()
-    root.title("Password Strength Checker - Casual Edition! 😎")
-    root.geometry("600x500")
-    root.configure(bg="#f0f0f0")
+    root.title("Hacker Mode: Password Strength Checker - TECNO_MAYUR Edition! 🕵️‍♂️💻")
+    root.geometry("700x600")
+    root.configure(bg="black")  # Hacker black bg
     
-    # Style for casual look
+    # Style for hacker theme
     style = ttk.Style()
     style.theme_use('clam')
+    style.configure("TLabel", foreground="lime", background="black", font=("Courier", 10))  # Monospace green
+    style.configure("TButton", foreground="black", background="green", font=("Courier", 10, "bold"))
+    style.configure("TEntry", foreground="lime", fieldbackground="black")
+    style.configure("TCombobox", foreground="lime", fieldbackground="black")
+    style.configure("TSpinbox", foreground="lime", fieldbackground="black")
     
-    # Input frame
+    # Title label with animation
+    title_label = tk.Label(root, text="Hacker Mode Activated! 🔓", font=("Courier", 16, "bold"), fg="lime", bg="black")
+    title_label.pack(pady=10)
+    
+    # Input frame (green theme)
     input_frame = ttk.Frame(root, padding="10")
     input_frame.pack(fill=tk.X)
     
     ttk.Label(input_frame, text="Enter Password:").grid(row=0, column=0, sticky=tk.W)
-    password_entry = ttk.Entry(input_frame, show="*", width=40, font=("Arial", 12))
+    password_entry = ttk.Entry(input_frame, show="*", width=40, font=("Courier", 12))
     password_entry.grid(row=0, column=1, padx=5)
     
-    ttk.Button(input_frame, text="Check Strength", command=lambda: check_and_show()).grid(row=0, column=2, padx=5)
+    check_btn = ttk.Button(input_frame, text="Scan Strength", command=lambda: check_and_show())
+    check_btn.grid(row=0, column=2, padx=5)
     
     # Generator frame
-    gen_frame = ttk.LabelFrame(root, text="Generate Casual Passwords", padding="10")
+    gen_frame = ttk.LabelFrame(root, text="Generate Hacker Passwords", padding="10")
     gen_frame.pack(fill=tk.X, padx=10, pady=5)
     
     ttk.Label(gen_frame, text="Length:").grid(row=0, column=0)
@@ -192,54 +247,73 @@ def create_gui():
     style_combo = ttk.Combobox(gen_frame, textvariable=style_var, values=["Casual", "Strong", "Funny"], state="readonly", width=10)
     style_combo.grid(row=0, column=3, padx=5)
     
-    num_var = tk.IntVar(value=2)  # Default 2 passwords
+    num_var = tk.IntVar(value=2)
     ttk.Label(gen_frame, text="Count:").grid(row=0, column=4)
     num_spin = ttk.Spinbox(gen_frame, from_=1, to=5, textvariable=num_var, width=5)
     num_spin.grid(row=0, column=5, padx=5)
     
-    # Fixed: Use grid instead of pack for button
-    ttk.Button(gen_frame, text="Generate & Copy", command=lambda: generate_and_show()).grid(row=1, column=0, columnspan=6, pady=5)
+    gen_btn = ttk.Button(gen_frame, text="Generate & Hack It! 💥", command=lambda: generate_and_show())
+    gen_btn.grid(row=1, column=0, columnspan=6, pady=5)
     
     # Results frame
-    result_frame = ttk.LabelFrame(root, text="Results & Feedback", padding="10")
+    result_frame = ttk.LabelFrame(root, text="Hack Results", padding="10")
     result_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
     
-    result_text = scrolledtext.ScrolledText(result_frame, height=10, width=70, font=("Arial", 10))
+    result_text = scrolledtext.ScrolledText(result_frame, height=10, width=80, font=("Courier", 10), fg="lime", bg="black", insertbackground="lime")
     result_text.pack(fill=tk.BOTH, expand=True)
     
+    # Score label for flashing
+    score_label = tk.Label(result_frame, text="", font=("Courier", 14, "bold"), fg="red", bg="black")
+    score_label.pack(pady=5)
+    
     # History frame
-    history_frame = ttk.LabelFrame(root, text="History (Last 10)", padding="10")
+    history_frame = ttk.LabelFrame(root, text="Hack History (Last 10)", padding="10")
     history_frame.pack(fill=tk.X, padx=10, pady=5)
     
-    history_list = tk.Listbox(history_frame, height=4)
+    history_list = tk.Listbox(history_frame, height=4, fg="lime", bg="black", font=("Courier", 9), selectbackground="green")
     history_list.pack(fill=tk.X)
     
     def update_history():
-        history = load_history()[-10:]  # Last 10
+        history = load_history()[-10:]
         history_list.delete(0, tk.END)
         for entry in history:
             history_list.insert(tk.END, entry)
     
-    ttk.Button(history_frame, text="Refresh History", command=update_history).pack(side=tk.LEFT)
-    ttk.Button(history_frame, text="Export History", command=export_history).pack(side=tk.RIGHT)
+    ttk.Button(history_frame, text="Refresh Logs", command=update_history).pack(side=tk.LEFT)
+    export_btn = ttk.Button(history_frame, text="Export Data", command=export_history)
+    export_btn.pack(side=tk.RIGHT)
+    
+    # Watermark: TECNO_MAYUR
+    watermark = tk.Label(root, text="Created by TECNO_MAYUR 🛡️", font=("Courier", 8), fg="gray", bg="black")
+    watermark.pack(side=tk.BOTTOM, pady=5)
     
     # Initial load
     update_history()
     
     def check_and_show():
+        play_scan_sound()
         password = password_entry.get()
         if not password:
-            messagebox.showwarning("Empty", "Enter a password first! 😅")
+            messagebox.showwarning("Alert!", "Enter a password first! 😅")
             return
         score, level, feedback = check_strength(password)
         save_to_history(password, f"{score}/100 ({level})", "checked")
         
-        result = f"Strength Score: {score}/100 ({level}) 🎯\n\nFeedback:\n" + "\n".join(feedback)
-        result_text.delete(1.0, tk.END)
-        result_text.insert(tk.END, result)
+        result = f"Strength Score: {score}/100 ({level}) 🎯\n\nFeedback:\n"
+        for fb in feedback:
+            result += fb + "\n"
+        
+        # Typing animation
+        root.after(0, lambda: type_text(result_text, result, 0.03))  # Hacker typing speed
+        
+        # Flash score
+        score_label.config(text=f"Score: {score}/100 - {level}")
+        root.after(500, lambda: flash_score(score_label, "lime" if score >= 60 else "red", 4))
+        
         update_history()
     
     def generate_and_show():
+        play_beep(500, 0.1)  # Loading sound
         length = length_var.get()
         style = style_var.get()
         num = num_var.get()
@@ -248,21 +322,26 @@ def create_gui():
         result = f"Generated {num} {style} Password(s):\n\n"
         for i, pw in enumerate(passwords, 1):
             result += f"{i}. {pw}\n"
-            if i == 1:  # Copy first one auto
+            if i == 1:
                 copy_to_clipboard(pw)
-        result += f"\nTip: {tip}\n\nCopy the first one – it's ready! 📋"
+        result += f"\nMeme Tip: {tip}\n\nFirst one copied – Hack on! 🕶️"
         
-        result_text.delete(1.0, tk.END)
-        result_text.insert(tk.END, result)
+        # Typing animation for results
+        root.after(300, lambda: type_text(result_text, result, 0.04))
+        
+        # Success flash
+        score_label.config(text="Generation Complete! 💻")
+        root.after(800, lambda: flash_score(score_label, "green", 3))
+        
         update_history()
+        play_success_sound()
     
     root.mainloop()
 
 if __name__ == "__main__":
-    # Check if Tkinter available (for non-GUI fallback)
     try:
         create_gui()
-    except ImportError:
-        print("Tkinter not available. Running console mode...")
-        # Console fallback code here (original console version if needed)
+    except ImportError as e:
+        print(f"Error: {e}. Install missing libs: pip install pygame pyperclip")
+        # Console fallback if needed
         pass
